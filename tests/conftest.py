@@ -1,10 +1,10 @@
 import asyncio
 import os
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator
 
 import pytest
 import pytest_asyncio
-from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # Set test environment variables before importing app modules
@@ -16,26 +16,12 @@ os.environ["RELAY_USER"] = "test@example.com"
 os.environ["RELAY_PASSWORD"] = "test-password"
 os.environ["FROM_EMAIL"] = "test@example.com"
 
-from app.config import get_settings
 from app.db.base import Base
 from app.dependencies import get_db
 from app.main import app
 
 # Test database URL (use in-memory SQLite for tests)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
-# Create test engine
-test_engine = create_async_engine(
-    TEST_DATABASE_URL,
-    echo=False,
-)
-
-# Create test session factory
-TestSessionLocal = async_sessionmaker(
-    test_engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
 
 
 @pytest.fixture(scope="session")
@@ -48,30 +34,54 @@ def event_loop():
 
 
 @pytest_asyncio.fixture
-async def db_session() -> AsyncGenerator[AsyncSession, None]:
+async def db() -> AsyncGenerator[AsyncSession, None]:
     """Create a test database session."""
-    async with test_engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
+    # Create engine for this test
+    engine = create_async_engine(
+        TEST_DATABASE_URL,
+        echo=False,
+        poolclass=None,  # Use NullPool for SQLite
+    )
 
-        async with TestSessionLocal() as session:
+    # Create session factory
+    SessionLocal = async_sessionmaker(
+        engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+
+    try:
+        # Create tables
+        async with engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
+
+        # Provide session
+        async with SessionLocal() as session:
             yield session
 
-        await connection.run_sync(Base.metadata.drop_all)
+        # Drop tables
+        async with engine.begin() as connection:
+            await connection.run_sync(Base.metadata.drop_all)
 
-    # Ensure engine is disposed after tests
-    await test_engine.dispose()
+    finally:
+        # Always dispose engine
+        await engine.dispose()
 
 
-@pytest.fixture
-def client(db_session: AsyncSession) -> TestClient:
-    """Create a test client with database dependency override."""
+@pytest_asyncio.fixture
+async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    """Create an async test client with database dependency override."""
 
     async def override_get_db():
-        yield db_session
+        yield db
 
     app.dependency_overrides[get_db] = override_get_db
 
-    with TestClient(app) as test_client:
-        yield test_client
-
-    app.dependency_overrides.clear()
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(
+            transport=transport, base_url="http://test"
+        ) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.clear()

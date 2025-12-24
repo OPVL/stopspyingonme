@@ -1,11 +1,13 @@
 from functools import lru_cache
+from typing import Literal
 
-from pydantic import ConfigDict, Field, field_validator
-from pydantic_settings import BaseSettings
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = ConfigDict(env_file=".env", case_sensitive=False)
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
+
     # App Config
     app_name: str = "Stop Spying On Me"
     debug: bool = False
@@ -16,6 +18,7 @@ class Settings(BaseSettings):
     db_pool_size: int = Field(default=5, ge=1, le=10)  # shared hosting
 
     @field_validator("database_url")
+    @classmethod
     def validate_database_url(cls, v: str) -> str:
         """Allow PostgreSQL and SQLite URLs."""
         if not (v.startswith(("postgresql", "sqlite"))):
@@ -34,7 +37,7 @@ class Settings(BaseSettings):
     session_max_age: int = 86400 * 7  # 7 days
     session_secure: bool = True
     session_httponly: bool = True
-    session_samesite: str = "lax"
+    session_samesite: Literal["lax", "strict", "none"] = "lax"
 
     # Rate Limiting
     rate_limit_requests: int = 100
@@ -61,4 +64,4 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings() -> Settings:
-    return Settings()
+    return Settings()  # type: ignore[call-arg]

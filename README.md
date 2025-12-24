@@ -88,15 +88,27 @@ pytest tests/test_api/test_main.py -v
 
 ## Code Quality
 
-```bash
-# Format code
-black .
-isort .
+The project uses unified linting rules with consistent 88-character line length:
 
-# Lint code
-flake8 .
-mypy .
+```bash
+# Run all code quality checks
+./scripts/lint.sh
+
+# Individual tools
+black .                    # Format code
+isort .                    # Sort imports
+flake8 app/                   # Lint code
+mypy app/                  # Type check
 ```
+
+### Linting Configuration
+
+- **Line length**: 88 characters (unified across all tools)
+- **Import sorting**: isort with black profile
+- **Type checking**: mypy with strict settings
+- **Code formatting**: black with Python 3.11+ target
+
+All linting rules are configured in `pyproject.toml` and `setup.cfg` for maximum compatibility.
 
 ## Project Structure
 
@@ -142,6 +154,19 @@ stopspyingonme/
 - Use async/await patterns throughout
 - Implement proper error handling with RFC7807 format
 - Encrypt sensitive data with PostgreSQL pgcrypto
+- Run `./scripts/lint.sh` before committing
+- Pre-commit hooks automatically enforce code quality
+
+### Pre-commit Setup
+
+```bash
+# Install pre-commit hooks (one-time setup)
+./scripts/setup-pre-commit.sh
+
+# Hooks will run automatically on git commit
+# To run manually on all files:
+pre-commit run --all-files
+```
 
 ## Legacy SMTP Server
 

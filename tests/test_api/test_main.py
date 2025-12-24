@@ -1,17 +1,21 @@
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
 
-def test_root_endpoint(client: TestClient):
-    """Test the root endpoint."""
-    response = client.get("/")
-    assert response.status_code == 200
-    assert response.json() == {"message": "Stop Spying On Me - Email Privacy Service"}
+class TestMainAPI:
+    """Test main API endpoints."""
 
+    async def test_root_endpoint(self, client: AsyncClient):
+        """Test the root endpoint."""
+        response = await client.get("/")
+        assert response.status_code == 200
+        assert response.json() == {
+            "message": "Stop Spying On Me - Email Privacy Service"
+        }
 
-def test_health_check_endpoint(client: TestClient):
-    """Test the health check endpoint."""
-    response = client.get("/health")
-    assert response.status_code == 200
-    data = response.json()
-    assert "status" in data
-    assert "database" in data
+    async def test_health_check_endpoint(self, client: AsyncClient):
+        """Test the health check endpoint."""
+        response = await client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert "status" in data
+        assert "database" in data
