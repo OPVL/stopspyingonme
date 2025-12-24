@@ -39,9 +39,10 @@ TestSessionLocal = async_sessionmaker(
 
 
 @pytest.fixture(scope="session")
-def event_loop() -> Generator:
+def event_loop():
     """Create an instance of the default event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
     yield loop
     loop.close()
 
@@ -56,6 +57,9 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
             yield session
 
         await connection.run_sync(Base.metadata.drop_all)
+
+    # Ensure engine is disposed after tests
+    await test_engine.dispose()
 
 
 @pytest.fixture

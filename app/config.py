@@ -1,10 +1,11 @@
 from functools import lru_cache
 
-from pydantic import Field, field_validator
+from pydantic import ConfigDict, Field, field_validator
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    model_config = ConfigDict(env_file=".env", case_sensitive=False)
     # App Config
     app_name: str = "Stop Spying On Me"
     debug: bool = False
@@ -56,10 +57,6 @@ class Settings(BaseSettings):
         default="http://localhost:8000",
         alias="WEBAUTHN_ORIGIN",
     )
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
 
 
 @lru_cache()
