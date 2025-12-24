@@ -18,12 +18,17 @@ A privacy-focused email aliasing service that allows users to create proxy email
 
 ## Licensing
 
-**AGPL-3.0 with Commons Clause**
-- Prevents unauthorized commercial resale
-- Requires source disclosure for hosted modifications
-- Allows personal self-hosting
-- Commercial licensing available upon request
-- Resellers must contact for partnership agreement
+**AGPL-3.0 Open Source**
+- Self-hosted deployment with full source code access
+- Requires source disclosure for any hosted modifications
+- Allows personal and organizational self-hosting
+- Commercial hosting services must provide source code to users
+- Commercial licensing available for proprietary integrations
+
+**Dual Licensing Strategy**
+- AGPL-3.0 for open source community and self-hosting
+- Separate commercial license for businesses wanting proprietary use
+- Contact for commercial licensing: [lloydculpepper4@gmail.com]
 
 ## MVP Scope (Phase 1)
 

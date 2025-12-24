@@ -69,3 +69,17 @@ This is a test.
 .
 QUIT
 ```
+
+## Development
+
+### Running Tests
+```bash
+pip install -r test-requirements.txt
+pytest test_server.py -v --cov=server
+```
+
+## License
+
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) - see the [LICENSE](LICENSE) file for details.
+
+For commercial licensing options, contact: [lloydculpepper4@gmail.com]
