@@ -1,85 +1,158 @@
-# Stop Spying On Me - Minimal Prototype
+# Stop Spying On Me - Email Privacy Service
 
-Email privacy service that forwards emails from aliases to real addresses.
+A modern email privacy service built with FastAPI that provides secure email alias forwarding with comprehensive privacy controls.
 
 ## Quick Start
 
-### 1. Install Dependencies
+### 1. Prerequisites
+
+- Python 3.11+
+- PostgreSQL 14+ (for production)
+- Git
+
+### 2. Clone and Setup
+
 ```bash
+git clone <repository-url>
+cd stopspyingonme
+
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements.txt
+pip install -r dev-requirements.txt  # For development
 ```
 
-### 2. Configure
+### 3. Configuration
+
 ```bash
+# Copy environment template
 cp .env.example .env
+
+# Generate a secure secret key
+python scripts/generate_secret_key.py
+
+# Edit .env with your settings
 ```
 
-Edit `.env` and set:
+Required environment variables:
+- `SECRET_KEY`: Cryptographically secure secret (use script above)
+- `DATABASE_URL`: PostgreSQL connection string
 - `RELAY_HOST`, `RELAY_PORT`: Your SMTP server for forwarding
 - `RELAY_USER`, `RELAY_PASSWORD`: SMTP credentials
-- `ALIASES`: Comma-separated alias=destination pairs
+- `FROM_EMAIL`: Email address for system emails
 
-Example for Gmail:
+### 4. Database Setup
+
+```bash
+# Initialize database (creates extensions)
+python scripts/init_db.py
+
+# Run migrations
+alembic upgrade head
 ```
-RELAY_HOST=smtp.gmail.com
-RELAY_PORT=587
-RELAY_USER=your-email@gmail.com
-RELAY_PASSWORD=your-app-password
-ALIASES=test@localhost=your-email@gmail.com
+
+### 5. Development Server
+
+```bash
+# Start the FastAPI development server
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-**Note**: For Gmail, use an [App Password](https://support.google.com/accounts/answer/185833)
+Visit http://localhost:8000 for the API and http://localhost:8000/docs for interactive documentation.
 
-### 3. Run Server
+## Docker Development
+
+```bash
+# Start with Docker Compose (includes PostgreSQL)
+docker-compose up -d
+
+# Run migrations in container
+docker-compose exec app alembic upgrade head
+```
+
+## Testing
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=app --cov-report=html
+
+# Run specific test file
+pytest tests/test_api/test_main.py -v
+```
+
+## Code Quality
+
+```bash
+# Format code
+black .
+isort .
+
+# Lint code
+flake8 .
+mypy .
+```
+
+## Project Structure
+
+```
+stopspyingonme/
+├── app/                    # Main application package
+│   ├── api/v1/            # API endpoints (versioned)
+│   ├── models/            # SQLAlchemy models
+│   ├── schemas/           # Pydantic schemas
+│   ├── services/          # Business logic
+│   ├── db/                # Database configuration
+│   ├── middleware/        # Custom middleware
+│   ├── templates/         # Jinja2 templates
+│   ├── static/            # Static files
+│   └── utils/             # Utility functions
+├── alembic/               # Database migrations
+├── tests/                 # Test suite
+├── scripts/               # Utility scripts
+├── docker/                # Docker configurations
+└── docs/                  # Documentation
+```
+
+## Architecture
+
+- **Framework**: FastAPI with async support
+- **Database**: PostgreSQL with SQLAlchemy 2.0 ORM
+- **Migrations**: Alembic
+- **Authentication**: Magic links + WebAuthn
+- **Sessions**: Signed cookies
+- **Templates**: Jinja2
+- **Testing**: pytest with async support
+
+## API Documentation
+
+- Interactive docs: http://localhost:8000/docs
+- OpenAPI spec: http://localhost:8000/openapi.json
+- Health check: http://localhost:8000/health
+
+## Development Guidelines
+
+- Follow the core principles in `.amazonq/rules/`
+- Maintain >80% test coverage for core modules
+- Use async/await patterns throughout
+- Implement proper error handling with RFC7807 format
+- Encrypt sensitive data with PostgreSQL pgcrypto
+
+## Legacy SMTP Server
+
+The original SMTP server (`server.py`) is still available for backward compatibility:
+
 ```bash
 python server.py
-```
-
-### 4. Test
-In another terminal:
-```bash
-python test_send.py test@localhost
-```
-
-Check your destination inbox for the forwarded email.
-
-## How It Works
-
-1. SMTP server listens on `localhost:8025`
-2. Receives email to alias (e.g., `test@localhost`)
-3. Looks up destination in `ALIASES` config
-4. Forwards email via SMTP relay
-5. Logs all activity to console
-
-## Testing with Real Email Clients
-
-Send email using any SMTP client:
-```bash
-# Using swaks (if installed)
-swaks --to test@localhost --server localhost:8025
-
-# Using telnet
-telnet localhost 8025
-EHLO localhost
-MAIL FROM: sender@example.com
-RCPT TO: test@localhost
-DATA
-Subject: Test
-This is a test.
-.
-QUIT
-```
-
-## Development
-
-### Running Tests
-```bash
-pip install -r test-requirements.txt
-pytest test_server.py -v --cov=server
 ```
 
 ## License
 
 This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) - see the [LICENSE](LICENSE) file for details.
 
-For commercial licensing options, contact: [xxxxxx@quitspyingon.me]
+For commercial licensing options, contact: [contact@quitspyingon.me]
