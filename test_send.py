@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+
+# pragma: no cover
+
 import smtplib
 import sys
 from email.message import EmailMessage

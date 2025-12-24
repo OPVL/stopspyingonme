@@ -5,7 +5,6 @@ import smtplib
 from email.message import EmailMessage
 
 from aiosmtpd.controller import Controller
-from aiosmtpd.smtp import SMTP as SMTPServer
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,8 +13,11 @@ load_dotenv()
 ALIASES = {}
 for alias_pair in os.getenv("ALIASES", "").split(","):
     if "=" in alias_pair:
-        alias, dest = alias_pair.strip().split("=")
-        ALIASES[alias.strip()] = dest.strip()
+        try:
+            alias, dest = alias_pair.strip().split("=", 1)
+            ALIASES[alias.strip()] = dest.strip()
+        except ValueError:
+            print(f"[WARNING] Invalid alias format: {alias_pair}")
 
 
 class ForwardingHandler:
@@ -41,13 +43,21 @@ class ForwardingHandler:
 
                 # Forward via SMTP relay
                 relay_host = os.getenv("RELAY_HOST")
-                relay_port = int(os.getenv("RELAY_PORT", 587))
+                if not relay_host:
+                    print("[ERROR] RELAY_HOST not configured")
+                    return "550 Relay not configured"
+
+                try:
+                    relay_port = int(os.getenv("RELAY_PORT", 587))
+                except ValueError:
+                    relay_port = 587
+
                 relay_user = os.getenv("RELAY_USER")
                 relay_pass = os.getenv("RELAY_PASSWORD")
 
-                assert relay_host is str
-                assert relay_user is str
-                assert relay_pass is str
+                if not relay_user or not relay_pass:
+                    print("[ERROR] RELAY credentials not configured")
+                    return "550 Relay credentials missing"
 
                 with smtplib.SMTP(relay_host, relay_port) as smtp:
                     smtp.starttls()
@@ -64,21 +74,28 @@ class ForwardingHandler:
 
 async def main():
     host = os.getenv("SMTP_HOST", "localhost")
-    port = int(os.getenv("SMTP_PORT", 8025))
+    try:
+        port = int(os.getenv("SMTP_PORT", 8025))
+    except ValueError:
+        port = 8025
+        print(f"[WARNING] Invalid SMTP_PORT, using default: {port}")
 
     print(f"\n{'='*60}")
-    print(f"Email Privacy Service - Minimal Prototype")
+    print("Email Privacy Service - Minimal Prototype")
     print(f"{'='*60}")
     print(f"SMTP Server: {host}:{port}")
-    print(f"Configured aliases:")
-    for alias, dest in ALIASES.items():
-        print(f"  {alias} -> {dest}")
+    print("Configured aliases:")
+    if ALIASES:
+        for alias, dest in ALIASES.items():
+            print(f"  {alias} -> {dest}")
+    else:
+        print("  [WARNING] No aliases configured")
     print(f"{'='*60}\n")
 
     controller = Controller(ForwardingHandler(), hostname=host, port=port)
     controller.start()
 
-    print(f"[RUNNING] Server started. Press Ctrl+C to stop.\n")
+    print("[RUNNING] Server started. Press Ctrl+C to stop.\n")
 
     try:
         while True:
