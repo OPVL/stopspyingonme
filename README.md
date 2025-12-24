@@ -82,4 +82,4 @@ pytest test_server.py -v --cov=server
 
 This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) - see the [LICENSE](LICENSE) file for details.
 
-For commercial licensing options, contact: [lloydculpepper4@gmail.com]
+For commercial licensing options, contact: [xxxxxx@quitspyingon.me]

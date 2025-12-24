@@ -28,7 +28,7 @@ A privacy-focused email aliasing service that allows users to create proxy email
 **Dual Licensing Strategy**
 - AGPL-3.0 for open source community and self-hosting
 - Separate commercial license for businesses wanting proprietary use
-- Contact for commercial licensing: [lloydculpepper4@gmail.com]
+- Contact for commercial licensing: [xxxxxx@quitspyingon.me]
 
 ## MVP Scope (Phase 1)
 
