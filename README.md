@@ -6,7 +6,7 @@ A modern email privacy service built with FastAPI that provides secure email ali
 
 ### 1. Prerequisites
 
-- Python 3.11+
+- Python 3.14+
 - PostgreSQL 14+ (for production)
 - Git
 
@@ -106,7 +106,7 @@ mypy app/                  # Type check
 - **Line length**: 88 characters (unified across all tools)
 - **Import sorting**: isort with black profile
 - **Type checking**: mypy with strict settings
-- **Code formatting**: black with Python 3.11+ target
+- **Code formatting**: black with Python 3.14+ target
 
 All linting rules are configured in `pyproject.toml` and `setup.cfg` for maximum compatibility.
 

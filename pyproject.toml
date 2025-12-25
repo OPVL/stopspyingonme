@@ -37,7 +37,8 @@ dev = [
     "flake8>=7.3.0",
     "mypy>=1.19.0",
     "pre-commit>=4.0.0",
-    "aiosqlite>=0.22.0"
+    "aiosqlite>=0.22.0",
+    "faker>=39.0.0"
 ]
 
 [tool.black]
@@ -113,3 +114,10 @@ exclude_lines = [
     "raise AssertionError",
     "raise NotImplementedError",
 ]
+
+[tool.bandit]
+exclude_dirs = ["tests", "alembic/versions"]
+skips = ["B101"]  # Skip assert_used test since we use asserts in tests
+
+[tool.bandit.assert_used]
+skips = ["*_test.py", "test_*.py"]
