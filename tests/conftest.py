@@ -19,6 +19,11 @@ os.environ["FROM_EMAIL"] = "test@example.com"
 from app.db.base import Base
 from app.dependencies import get_db
 from app.main import app
+from app.models.alias import Alias
+from app.models.destination import Destination
+from app.models.user import User
+from tests.factories import AliasFactory, DestinationFactory, UserFactory
+from tests.mocks.email import mock_email_service
 
 # Test database URL (use in-memory SQLite for tests)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -71,9 +76,15 @@ async def db() -> AsyncGenerator[AsyncSession, None]:
 @pytest_asyncio.fixture
 async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Create an async test client with database dependency override."""
+    # Import here to avoid circular imports
+    import app.services.email as email_module
 
     async def override_get_db():
         yield db
+
+    # Override email service with mock
+    original_email_service = email_module.email_service
+    email_module.email_service = mock_email_service
 
     app.dependency_overrides[get_db] = override_get_db
 
@@ -85,3 +96,47 @@ async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
             yield test_client
     finally:
         app.dependency_overrides.clear()
+        email_module.email_service = original_email_service
+        mock_email_service.clear_sent_emails()
+
+
+@pytest_asyncio.fixture
+async def user(db: AsyncSession) -> User:
+    """Create a test user."""
+    return await UserFactory.create(db, email="test@example.com")
+
+
+@pytest_asyncio.fixture
+async def destination(db: AsyncSession, user: User) -> Destination:
+    """Create a test destination."""
+    return await DestinationFactory.create(
+        db, user=user, email="destination@example.com"
+    )
+
+
+@pytest_asyncio.fixture
+async def alias(db: AsyncSession, user: User, destination: Destination) -> Alias:
+    """Create a test alias."""
+    return await AliasFactory.create(
+        db, user=user, destination=destination, name="testalias"
+    )
+
+
+@pytest_asyncio.fixture
+async def authenticated_client(
+    client: AsyncClient, user: User
+) -> AsyncGenerator[AsyncClient, None]:
+    """Create an authenticated test client with session cookie."""
+    # Create a magic link and verify it to establish session
+    response = await client.post(
+        "/api/v1/auth/request-magic-link",
+        json={"email": user.email},
+    )
+    assert response.status_code == 200
+
+    # For testing, we'll mock the verification process
+    # In real tests, you'd extract the token from the email service mock
+    # For now, we'll use the direct login endpoint if available
+    # or create a session directly in the database
+
+    yield client

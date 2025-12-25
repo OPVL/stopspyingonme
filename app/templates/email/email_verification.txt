@@ -1,0 +1,19 @@
+Subject: Verify your email address
+
+Hello,
+
+I'm Porter, your digital privacy assistant. To complete your email setup for quitspyingonme, please verify this email address.
+
+Click here to verify:
+{{ verification_url }}
+
+This verification ensures that forwarded emails reach you securely at {{ email }}.
+
+If you didn't add this email address, you can safely ignore this message.
+
+Cheers,
+Porter
+quitspyingonme - Email Privacy Service
+
+---
+This is an automated message. Please do not reply to this email.

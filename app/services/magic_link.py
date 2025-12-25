@@ -94,6 +94,15 @@ class MagicLinkService:
 
         return user
 
+    async def get_user_by_email(
+        self,
+        db: AsyncSession,
+        email: str,
+    ) -> User | None:
+        """Get user by email address."""
+        result = await db.execute(select(User).where(User.email == email))
+        return result.scalar_one_or_none()
+
     async def cleanup_expired_tokens(self, db: AsyncSession) -> int:
         """Remove expired magic link tokens."""
         result = await db.execute(

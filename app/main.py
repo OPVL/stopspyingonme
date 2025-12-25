@@ -1,4 +1,3 @@
-import uuid
 from typing import Awaitable, Callable
 
 from fastapi import FastAPI, HTTPException, Request
@@ -11,7 +10,13 @@ from starlette.responses import Response
 from app.api.v1.router import api_router
 from app.config import get_settings
 from app.db.session import check_db_health
+from app.middleware.logging import RequestLoggingMiddleware
 from app.middleware.session import SessionMiddleware
+from app.utils.logging import get_logger, setup_logging
+
+# Setup logging before creating app
+setup_logging()
+logger = get_logger(__name__)
 
 settings = get_settings()
 
@@ -25,16 +30,13 @@ app = FastAPI(
 templates = Jinja2Templates(directory="app/templates")
 
 
-# Request ID Middleware
+# Request ID Middleware (kept for backward compatibility)
 class RequestIDMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
-        request_id = str(uuid.uuid4())
-        request.state.request_id = request_id
-
+        # RequestLoggingMiddleware now handles request IDs
         response = await call_next(request)
-        response.headers["X-Request-ID"] = request_id
         return response
 
 
@@ -47,8 +49,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Request ID Middleware
-app.add_middleware(RequestIDMiddleware)
+# Request Logging Middleware (includes request ID generation)
+app.add_middleware(RequestLoggingMiddleware)
 
 # Session Middleware
 app.add_middleware(SessionMiddleware)
@@ -57,6 +59,14 @@ app.add_middleware(SessionMiddleware)
 # Exception Handlers
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    logger.warning(
+        "Resource not found",
+        extra={
+            "path": str(request.url),
+            "method": request.method,
+            "request_id": getattr(request.state, "request_id", None),
+        },
+    )
     return JSONResponse(
         status_code=404,
         content={
@@ -73,6 +83,15 @@ async def not_found_handler(request: Request, exc: HTTPException) -> JSONRespons
 async def validation_error_handler(
     request: Request, exc: HTTPException
 ) -> JSONResponse:
+    logger.warning(
+        "Validation error",
+        extra={
+            "path": str(request.url),
+            "method": request.method,
+            "request_id": getattr(request.state, "request_id", None),
+            "errors": getattr(exc, "detail", None),
+        },
+    )
     return JSONResponse(
         status_code=422,
         content={
@@ -87,6 +106,16 @@ async def validation_error_handler(
 
 @app.exception_handler(500)
 async def internal_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.error(
+        "Internal server error",
+        exc_info=True,
+        extra={
+            "path": str(request.url),
+            "method": request.method,
+            "request_id": getattr(request.state, "request_id", None),
+            "exception_type": type(exc).__name__,
+        },
+    )
     return JSONResponse(
         status_code=500,
         content={
@@ -109,11 +138,13 @@ async def health_check() -> JSONResponse:
     db_healthy = await check_db_health()
 
     if db_healthy:
+        logger.debug("Health check passed")
         return JSONResponse(
             status_code=200,
             content={"status": "healthy", "database": "connected"},
         )
     else:
+        logger.error("Health check failed - database disconnected")
         return JSONResponse(
             status_code=503,
             content={
@@ -126,4 +157,5 @@ async def health_check() -> JSONResponse:
 @app.get("/")
 async def root() -> dict[str, str]:
     """Root endpoint."""
+    logger.debug("Root endpoint accessed")
     return {"message": "Stop Spying On Me - Email Privacy Service"}

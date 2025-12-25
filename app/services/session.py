@@ -95,6 +95,15 @@ class SessionService:
         except (BadSignature, SignatureExpired, KeyError):
             return None
 
+    async def get_user_from_session(
+        self,
+        db: AsyncSession,
+        signed_token: str,
+    ) -> User | None:
+        """Get user from session token."""
+        result = await self.verify_session(db, signed_token)
+        return result[1] if result else None
+
     async def destroy_session(
         self,
         db: AsyncSession,
