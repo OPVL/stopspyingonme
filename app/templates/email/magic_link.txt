@@ -1,0 +1,19 @@
+Subject: Your secure sign-in link
+
+Hello,
+
+I'm Porter, your digital privacy assistant. You've requested a secure sign-in link for your quitspyingonme account.
+
+Click here to sign in:
+{{ magic_url }}
+
+This link will expire in {{ expires_minutes }} minutes for your security.
+
+If you didn't request this link, you can safely ignore this email. Your account remains secure.
+
+Cheers,
+Porter
+quitspyingonme - Email Privacy Service
+
+---
+This is an automated message. Please do not reply to this email.

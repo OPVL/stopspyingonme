@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import asyncio
 import os
 import smtplib
@@ -21,7 +22,7 @@ for alias_pair in os.getenv("ALIASES", "").split(","):
 
 
 class ForwardingHandler:
-    async def handle_DATA(self, server, session, envelope):
+    async def handle_DATA(self, server, session, envelope) -> str:
         print(f"\n[RECEIVED] From: {envelope.mail_from}")
         print(f"[RECEIVED] To: {envelope.rcpt_tos}")
 
