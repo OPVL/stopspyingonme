@@ -30,6 +30,9 @@ class ErrorResponse(BaseModel):
     status: int
     detail: str | None = None
     instance: str | None = None
+    error_code: str | None = None
+    request_id: str | None = None
+    errors: list[dict[str, str]] | None = None
 
 
 class MessageResponse(BaseModel):

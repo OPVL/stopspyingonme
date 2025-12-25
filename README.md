@@ -63,6 +63,22 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 Visit http://localhost:8000 for the API and http://localhost:8000/docs for interactive documentation.
 
+### 6. Seed Development Data (Optional)
+
+```bash
+# Populate database with sample data for development
+python scripts/seed_db.py
+
+# Or use specific scenarios
+python scripts/seed_db.py --scenario edge_cases
+python scripts/seed_db.py --scenario performance
+```
+
+Available scenarios:
+- `default`: Basic sample users, destinations, and aliases
+- `edge_cases`: Edge cases like rate-limited users, unverified destinations
+- `performance`: Large dataset (100 users) for performance testing
+
 ## Docker Development
 
 ```bash
@@ -156,6 +172,7 @@ stopspyingonme/
 - Encrypt sensitive data with PostgreSQL pgcrypto
 - Run `./scripts/lint.sh` before committing
 - Pre-commit hooks automatically enforce code quality
+- See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for comprehensive developer guide
 
 ### Pre-commit Setup
 
@@ -167,6 +184,37 @@ stopspyingonme/
 # To run manually on all files:
 pre-commit run --all-files
 ```
+
+## Troubleshooting
+
+### Common Issues
+
+**Database connection fails**:
+- Ensure PostgreSQL is running and accessible
+- Check `DATABASE_URL` in `.env` file
+- Run `python scripts/init_db.py` to test connection
+
+**Docker Compose issues**:
+- Port 5432 conflict: Stop local PostgreSQL or change port in `docker-compose.yml`
+- Permission errors: Ensure Docker has proper permissions
+- Database not ready: Wait for PostgreSQL container to fully start
+
+**Authentication not working**:
+- Check SMTP settings in `.env` for magic links
+- Ensure `SECRET_KEY` is set and secure
+- For WebAuthn: Use HTTPS in production, localhost works for development
+
+**Tests failing**:
+- Run `pytest --tb=short` for concise error output
+- Check test database configuration in `conftest.py`
+- Ensure all dependencies installed: `pip install -r dev-requirements.txt`
+
+**Import errors**:
+- Activate virtual environment: `source .venv/bin/activate`
+- Ensure project root in Python path
+- Check for circular imports in modules
+
+For detailed troubleshooting, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#troubleshooting).
 
 ## Legacy SMTP Server
 

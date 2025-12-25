@@ -1,6 +1,5 @@
 """Sample tests demonstrating factory patterns and fixtures."""
 
-import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -95,27 +94,25 @@ class TestAPIWithFixtures:
 
     async def test_health_endpoint(self, client: AsyncClient):
         """Test health endpoint works with test client."""
-        response = await client.get("/health")
+        response = await client.get("/api/v1/health")
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
 
     async def test_magic_link_request(self, client: AsyncClient):
         """Test magic link request endpoint."""
-        # Note: This test expects a 500 error because the email service
-        # will fail to connect to the SMTP server in the test environment
         response = await client.post(
             "/api/v1/auth/request-magic-link", json={"email": "test@example.com"}
         )
-        assert response.status_code == 500
+        assert response.status_code == 200
         data = response.json()
-        assert "detail" in data
+        assert data["message"] == "Magic link sent to your email address."
+        assert data["email"] == "test@example.com"
 
-    @pytest.mark.skip(
-        reason="Authenticated client fixture needs session implementation"
-    )
     async def test_authenticated_endpoint(self, authenticated_client: AsyncClient):
         """Test endpoint requiring authentication."""
-        # This would test protected endpoints once authentication is implemented
-        response = await authenticated_client.get("/api/v1/user/profile")
+        # Test the logout endpoint which requires authentication
+        response = await authenticated_client.post("/api/v1/auth/logout")
         assert response.status_code == 200
+        data = response.json()
+        assert data["message"] == "Signed out successfully."

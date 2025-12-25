@@ -77,14 +77,16 @@ async def db() -> AsyncGenerator[AsyncSession, None]:
 async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Create an async test client with database dependency override."""
     # Import here to avoid circular imports
-    import app.services.email as email_module
+    from app.api.v1 import auth
+    from app.services import email
 
     async def override_get_db():
         yield db
 
     # Override email service with mock
-    original_email_service = email_module.email_service
-    email_module.email_service = mock_email_service
+    original_email_service = email.email_service
+    email.email_service = mock_email_service
+    auth.email_service = mock_email_service
 
     app.dependency_overrides[get_db] = override_get_db
 
@@ -96,7 +98,7 @@ async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
             yield test_client
     finally:
         app.dependency_overrides.clear()
-        email_module.email_service = original_email_service
+        email.email_service = original_email_service
         mock_email_service.clear_sent_emails()
 
 
@@ -134,9 +136,17 @@ async def authenticated_client(
     )
     assert response.status_code == 200
 
-    # For testing, we'll mock the verification process
-    # In real tests, you'd extract the token from the email service mock
-    # For now, we'll use the direct login endpoint if available
-    # or create a session directly in the database
+    # Get the token from the mock email service
+    from tests.mocks.email import mock_email_service
+
+    assert len(mock_email_service.sent_emails) > 0
+    token = mock_email_service.sent_emails[-1]["token"]
+
+    # Verify the magic link to create session
+    response = await client.post(
+        "/api/v1/auth/verify-magic-link",
+        json={"token": token},
+    )
+    assert response.status_code == 200
 
     yield client

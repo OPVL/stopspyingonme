@@ -91,7 +91,7 @@ class TestAuth:
         response = await client.post("/api/v1/auth/passkey/register-options")
 
         assert response.status_code == 401
-        assert "Not authenticated" in response.json()["detail"]
+        assert "Authentication required" in response.json()["detail"]
 
     async def test_passkey_register_options_authenticated(
         self, client: AsyncClient, db: AsyncSession
