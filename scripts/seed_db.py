@@ -3,6 +3,7 @@
 
 import argparse
 import asyncio
+import base64
 import os
 import sys
 from datetime import datetime, timedelta, timezone
@@ -130,6 +131,8 @@ class DatabaseSeeder:
         """Seed large dataset for performance testing."""
         print("🚀 Creating performance test data...")
 
+        used_names = set()  # Track used alias names globally
+
         # Create 100 users with realistic data
         for i in range(100):
             user = await self._create_user(f"user{i:03d}@example.com")
@@ -144,10 +147,22 @@ class DatabaseSeeder:
                 # Each destination has 2-10 aliases
                 alias_count = fake.random_int(min=2, max=10)
                 for k in range(alias_count):
+                    # Generate unique alias name
+                    attempts = 0
+                    while attempts < 10:
+                        name = f"user{i:03d}alias{k}{fake.random_int(min=1, max=99)}"
+                        if name not in used_names:
+                            used_names.add(name)
+                            break
+                        attempts += 1
+                    else:
+                        name = f"unique{len(used_names)}"
+                        used_names.add(name)
+
                     await self._create_alias(
                         user,
                         dest,
-                        f"alias{k}",
+                        name,
                         "quitspyingon.me",
                         is_active=fake.boolean(chance_of_getting_true=80),
                     )
@@ -199,6 +214,8 @@ class DatabaseSeeder:
             "spam",
         ]
 
+        used_names = set()  # Track used alias names to avoid duplicates
+
         for user in self.users:
             user_destinations = [d for d in self.destinations if d.user_id == user.id]
             if not user_destinations:
@@ -207,13 +224,26 @@ class DatabaseSeeder:
             # Create 3-8 aliases per user
             alias_count = fake.random_int(min=3, max=8)
             for i in range(alias_count):
-                pattern = fake.random_element(alias_patterns)
-                suffix = f"{i}" if i > 0 else ""
+                # Generate unique alias name
+                attempts = 0
+                while attempts < 10:  # Prevent infinite loop
+                    pattern = fake.random_element(alias_patterns)
+                    suffix = fake.random_int(min=1, max=999)
+                    name = f"{pattern}{suffix}"
+
+                    if name not in used_names:
+                        used_names.add(name)
+                        break
+                    attempts += 1
+                else:
+                    # Fallback to guaranteed unique name
+                    name = f"alias{len(used_names)}"
+                    used_names.add(name)
 
                 alias = await self._create_alias(
                     user,
                     fake.random_element(user_destinations),
-                    f"{pattern}{suffix}",
+                    name,
                     "quitspyingon.me",
                     is_active=fake.boolean(chance_of_getting_true=85),
                 )
@@ -285,8 +315,8 @@ class DatabaseSeeder:
         """Create a passkey for the user."""
         passkey = Passkey(
             user_id=user.id,
-            credential_id=fake.binary(length=32),
-            public_key=fake.binary(length=64),
+            credential_id=base64.b64encode(fake.binary(length=32)).decode("utf-8"),
+            public_key=base64.b64encode(fake.binary(length=64)).decode("utf-8"),
             name=f"{fake.word().title()} Key",
             sign_count=0,
         )
@@ -306,7 +336,7 @@ class DatabaseSeeder:
         return token
 
 
-async def main():
+async def main() -> None:
     """Main seeding function."""
     parser = argparse.ArgumentParser(description="Seed development database")
     parser.add_argument(
@@ -317,6 +347,9 @@ async def main():
     )
     parser.add_argument(
         "--force", action="store_true", help="Force seeding even if data exists"
+    )
+    parser.add_argument(
+        "--clear", action="store_true", help="Clear all data before seeding"
     )
 
     args = parser.parse_args()
