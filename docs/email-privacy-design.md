@@ -49,7 +49,7 @@ A privacy-focused email aliasing service that allows users to create proxy email
 - **Database**: PostgreSQL (primary choice for ACID compliance and encryption support)
 - **Frontend**: Server-side templates (Jinja2) with Tailwind CSS
 - **Email**: Hybrid approach (Cloudflare/Postmark for shared hosting, custom MTA for Docker)
-- **Deployment**: 
+- **Deployment**:
   - Shared hosting compatible (cPanel)
   - Docker containerized (Proxmox, etc.)
 
@@ -85,7 +85,7 @@ A privacy-focused email aliasing service that allows users to create proxy email
   - Passkey (WebAuthn) implementation
   - Magic link via email
   - Session management (JWT or secure cookies)
-  
+
 - **Alias Management API**
   - CRUD operations for aliases
   - Toggle active/inactive status
@@ -93,22 +93,22 @@ A privacy-focused email aliasing service that allows users to create proxy email
   - Add notes/labels
   - Generate random alias names
   - Multi-destination routing configuration
-  
+
 - **Destination Email Management**
   - Add/remove destination emails
   - Email verification flow
   - Link destinations to aliases
-  
+
 - **Custom Domain Management**
   - Add custom domain
   - DNS verification (TXT/MX records)
   - Domain status tracking
-  
+
 - **Webhook Management**
   - Configure webhook URLs
   - HMAC signature generation
   - Test webhook delivery
-  
+
 - **Dashboard**
   - List all aliases with status
   - View message flow (metadata only)

@@ -144,7 +144,7 @@ This isn't another tech company pretending to care while harvesting your data. W
 
 ### Grid System
 - **Container max-width**: 1200px
-- **Breakpoints**: 
+- **Breakpoints**:
   - Mobile: 320px+
   - Tablet: 768px+
   - Desktop: 1024px+
@@ -211,7 +211,7 @@ We're not trying to be:
   --color-error-red: #DC2626;
   --color-info-blue: #3B82F6;
   --color-success-green: #10B981;
-  
+
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --border-radius: 6px;
   --spacing-unit: 8px;
